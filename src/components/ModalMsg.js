@@ -2,7 +2,7 @@ import React from 'react'
 import '../index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function ModalMsg({ handleClose, show, msg }) {
+export default function ModalMsg({ handleClose, show, msg, tipo }) {
 
     const showHideClassName = show ? "modal display-block" : "modal display-none";
 
@@ -11,7 +11,7 @@ export default function ModalMsg({ handleClose, show, msg }) {
             <div className="modal-dialog" role="document">
             <div className="modal-content">
                     <div className="modal-header">
-                        <h5 className="modal-title" id="exampleModalLabel">Title</h5>
+                        <h5 className="modal-title" id="exampleModalLabel">{tipo}</h5>
                         <button type="button" className="close" onClick={handleClose}>
                             <span aria-hidden="true">&times;</span>
                         </button>

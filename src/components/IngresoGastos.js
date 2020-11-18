@@ -30,6 +30,7 @@ export default class IngresoGastos extends Component {
             },
             showModal: false,
             showModalEditar: false,
+            tipo: '',
             msg: '',
             listaMovimientos: JSON.parse(localStorage.getItem('frmIngresos')) || [],
             selectedOption: 'option1'
@@ -97,6 +98,7 @@ export default class IngresoGastos extends Component {
         }, async () => {
             if (this.state.frmIngresos.nombre === '') {
                 return this.setState({
+                    tipo: 'Error',
                     showModal: true,
                     msg: "El campo nombre no puede estar vacio"
                 })
@@ -104,6 +106,7 @@ export default class IngresoGastos extends Component {
             console.log(this.state.frmIngresos.cantidad);
             if (this.state.frmIngresos.cantidad < 0) {
                 return this.setState({
+                    tipo: 'Error',
                     showModal: true,
                     msg: "El campo cantidad no puede ser menor a 0"
                 })
@@ -112,6 +115,7 @@ export default class IngresoGastos extends Component {
             if (this.state.frmIngresos.tipoMovimiento === "2") {
                 if (this.state.saldo.final < 0 || (this.state.saldo.final - this.state.frmIngresos.cantidad) < 0) {
                     return this.setState({
+                        tipo: 'Error',
                         showModal: true,
                         msg: "No tiene suficiente saldo"
                     })
@@ -134,7 +138,12 @@ export default class IngresoGastos extends Component {
 
             await this.sumarIngresosGastos();
             this.saldo(this.state.saldo.inicial);
-            alert('El ingreso fue agregado con éxito');
+            return this.setState({
+                tipo: 'Registro Exitoso',
+                showModal: true,
+                msg: `El ${this.state.frmIngresos.tipoMovimiento === "2" ? 'gasto' : 'ingreso'} fue agregado con éxito`
+            })
+            // alert('El ingreso fue agregado con éxito');
         })
 
     }
@@ -217,11 +226,12 @@ export default class IngresoGastos extends Component {
         this.setState({ showModalEditar: false });
     }
 
-    handleUpdate(evento) {
+    async handleUpdate(evento) {
         evento.preventDefault();
 
         if (this.state.frmEditar.nombre === '') {
             return this.setState({
+                tipo: 'Error',
                 showModal: true,
                 msg: "El campo nombre no puede estar vacio"
             })
@@ -229,6 +239,7 @@ export default class IngresoGastos extends Component {
 
         if (this.state.frmEditar.cantidad < 0) {
             return this.setState({
+                tipo: 'Error',
                 showModal: true,
                 msg: "El campo cantidad no puede ser menor a 0"
             })
@@ -252,6 +263,12 @@ export default class IngresoGastos extends Component {
 
         localStorage.setItem('frmIngresos', JSON.stringify(nuevoArray));
         this.hideModalEditar();
+
+        this.setState({
+            listaMovimientos: nuevoArray
+        })
+        await this.sumarIngresosGastos();
+        this.saldo(this.state.saldo.inicial);
     }
 
     handleInputUpdate(evento) {
@@ -348,7 +365,7 @@ export default class IngresoGastos extends Component {
                         </div>
                     </div>
                 </div>
-                <ModalMsg show={this.state.showModal} handleClose={this.hideModal} msg={this.state.msg} />
+                <ModalMsg show={this.state.showModal} handleClose={this.hideModal} msg={this.state.msg} tipo={this.state.tipo} />
                 <EditarMovimiento show={this.state.showModalEditar} handleClose={this.hideModalEditar} frmData={this.state.frmEditar} handleUpdate={this.handleUpdate} handleInputUpdate={this.handleInputUpdate}/>
             </div>
 
