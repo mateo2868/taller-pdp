@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import uuid from 'react-uuid';
 import ModalMsg from './ModalMsg';
+import EditarMovimiento from './EditarMovimiento';
+import NumberFormat  from 'react-number-format'
 export default class IngresoGastos extends Component {
     constructor(props) {
         super(props);
@@ -20,7 +22,14 @@ export default class IngresoGastos extends Component {
                 ingresos: 0,
                 gastos: 0
             },
+            frmEditar: {
+                id: 0,
+                tipoMovimiento: '1',
+                nombre: '',
+                cantidad: 0
+            },
             showModal: false,
+            showModalEditar: false,
             msg: '',
             listaMovimientos: JSON.parse(localStorage.getItem('frmIngresos')) || [],
             selectedOption: 'option1'
@@ -34,6 +43,10 @@ export default class IngresoGastos extends Component {
         this.buscarMovimiento = this.buscarMovimiento.bind(this);
         this.buscar = this.buscar.bind(this);
         this.hideModal = this.hideModal.bind(this);
+        this.hideModalEditar = this.hideModalEditar.bind(this);
+        this.editarMovimiento = this.editarMovimiento.bind(this);
+        this.handleUpdate = this.handleUpdate.bind(this);
+        this.handleInputUpdate = this.handleInputUpdate.bind(this);
     }
 
     async componentDidMount() {
@@ -148,13 +161,16 @@ export default class IngresoGastos extends Component {
             listaMovimientos
         });
 
+        localStorage.setItem('frmIngresos', JSON.stringify(listaMovimientos))
         await this.sumarIngresosGastos();
         this.saldo(this.state.saldo.inicial);
-        localStorage.setItem('frmIngresos', JSON.stringify(listaMovimientos))
     }
 
-    editarMovimiento(id) {
-
+    editarMovimiento(data) {
+        this.setState({
+            frmEditar: data,
+            showModalEditar: true
+        })
     }
 
     buscarMovimiento(evento) {
@@ -194,23 +210,80 @@ export default class IngresoGastos extends Component {
     }
 
     hideModal() {
-        console.log('hola');
         this.setState({ showModal: false });
     };
+
+    hideModalEditar() {
+        this.setState({ showModalEditar: false });
+    }
+
+    handleUpdate(evento) {
+        evento.preventDefault();
+
+        if (this.state.frmEditar.nombre === '') {
+            return this.setState({
+                showModal: true,
+                msg: "El campo nombre no puede estar vacio"
+            })
+        }
+
+        if (this.state.frmEditar.cantidad < 0) {
+            return this.setState({
+                showModal: true,
+                msg: "El campo cantidad no puede ser menor a 0"
+            })
+        }
+
+        // if (this.state.frmEditar.tipoMovimiento === "2") {
+        //     if (this.state.saldo.final < 0 || (this.state.saldo.final - this.state.frmEditar.cantidad) < 0) {
+        //         return this.setState({
+        //             showModal: true,
+        //             msg: "No tiene suficiente saldo"
+        //         })
+        //     }
+        // }
+
+        let nuevoArray = JSON.parse(localStorage.getItem('frmIngresos'));
+        for (let i = 0; i < nuevoArray.length; i++) {
+            if (nuevoArray[i].id === this.state.frmEditar.id) {
+                nuevoArray[i] = this.state.frmEditar
+            }
+        }
+
+        localStorage.setItem('frmIngresos', JSON.stringify(nuevoArray));
+        this.hideModalEditar();
+    }
+
+    handleInputUpdate(evento) {
+        let name = evento.target.name;
+        this.setState({
+            frmEditar: {
+                ...this.state.frmEditar,
+                [name]: evento.target.value
+            }
+        })
+    }
 
     render() {
         const lista = this.state.listaMovimientos.map((todo) =>
             <tr key={todo.id}>
                 <td><button type="" className="btn btn-clear" onClick={() => this.eliminarMovimiento(todo.id)}><i className="fas fa-times"></i></button></td>
-                <td onClick={this.editarMovimiento(todo.id)}><i className="fas fa-pen"></i></td>
+                <td><button type="" className="btn btn-clear" onClick={() => this.editarMovimiento(todo)}><i className="fas fa-pen"></i></button></td>
                 <td>{todo.nombre}</td>
-                {todo.tipoMovimiento === "1" ? <td><button type="button" className="btn btn-success">{todo.cantidad}</button></td> : <td><button type="button" className="btn btn-danger">{todo.cantidad}</button></td>}
+                {todo.tipoMovimiento === "1" ?
+                    <NumberFormat value={todo.cantidad} displayType={'text'} thousandSeparator={true} prefix={'$'} renderText={
+                        value => <td><button type="button" className="btn btn-success">{value}</button></td>
+                    } /> :
+                    <NumberFormat value={todo.cantidad} displayType={'text'} thousandSeparator={true} prefix={'$'} renderText={
+                        value => <td><button type="button" className="btn btn-danger">{value}</button></td>
+                    } />
+                }
             </tr>
         )
 
         return (
             <div className="container">
-                <nav className="navbar navbar-light bg-light dimensiones" styleClass="width: 468px; heigth: 60px;">
+                <nav className="navbar navbar-light bg-light dimensiones">
                     {/* <a className="navbar-brand">Navbar</a> */}
                     <p>Title</p>
                     <form className="form-inline">
@@ -276,6 +349,7 @@ export default class IngresoGastos extends Component {
                     </div>
                 </div>
                 <ModalMsg show={this.state.showModal} handleClose={this.hideModal} msg={this.state.msg} />
+                <EditarMovimiento show={this.state.showModalEditar} handleClose={this.hideModalEditar} frmData={this.state.frmEditar} handleUpdate={this.handleUpdate} handleInputUpdate={this.handleInputUpdate}/>
             </div>
 
         )
